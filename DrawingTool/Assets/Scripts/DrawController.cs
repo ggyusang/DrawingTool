@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using OpenCVForUnity.CoreModule;
 using OpenCVForUnity.ImgprocModule;
+using OpenCVForUnity.UnityUtils;
 
 namespace ggyusang{ 
     public class DrawController : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerExitHandler, IPointerEnterHandler
@@ -228,7 +229,7 @@ namespace ggyusang{
 
 
 
-    /*    public void MakeImage()
+        public void MakeImage()
         {
             var matMask = new Mat(720, 720, CvType.CV_8UC3, new Scalar(0, 0, 0));
             var points = new List<Point>();
@@ -250,14 +251,14 @@ namespace ggyusang{
 
             var matThumbOneChannel = new Mat(matResult.size(), CvType.CV_8UC1);
             Imgproc.cvtColor(matResult, matThumbOneChannel, Imgproc.COLOR_RGB2GRAY);
-            var matChannels = matResult.Split();
+            var matChannels = SplitMatChannels(matResult);
             matChannels.Add(matThumbOneChannel);
-            var matThumbResult = matChannels.Merge();
-            
+            var matThumbResult = MergeMatChannels(matChannels);
+
             /// 썸네일
-            var thumbResult = matThumbResult.ToTexture2D(true, 0);
+            var thumbResult = ConvertMatToTexture2D(matThumbResult, true, 0);
             /// 마스크
-            var resultTexture = matMask.ToTexture2D(true, 0);
+            var resultTexture = ConvertMatToTexture2D(matMask, true, 0);
             
             this.thumb = thumbResult;
             this.mask = resultTexture;
@@ -271,7 +272,7 @@ namespace ggyusang{
             matChannels.ForEach(channel => channel?.Dispose());
             matThumbResult.Dispose();
         }
-*/
+
         public void OnPointerExit(PointerEventData eventData)
         {
             isOnPointer = false;
@@ -285,7 +286,36 @@ namespace ggyusang{
         {
             this.DestroyDrawAll();
         }
+        public List<Mat> SplitMatChannels(Mat mat)
+        {
+            List<Mat> matChannels = new List<Mat>();
+            Core.split(mat, matChannels); 
+            return matChannels;
+        }
 
 
+        public Texture2D ConvertMatToTexture2D(Mat mat, bool flipVertically = false, int padding = 0)
+        {
+        
+            Texture2D texture = new Texture2D(mat.cols(), mat.rows(), TextureFormat.RGBA32, false);
+
+
+            if (flipVertically)
+            {
+                Core.flip(mat, mat, 0); 
+            }
+
+
+            Utils.matToTexture2D(mat, texture);
+
+            return texture;
+        }
+        public Mat MergeMatChannels(List<Mat> channels)
+        {
+            Mat resultMat = new Mat();
+            Core.merge(channels, resultMat);  
+            return resultMat;
+        }
     }
+
     }
